@@ -1,0 +1,30 @@
+# Copyright (c) 2020, 2022, Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+#
+# This is a template for RCU Pod
+#
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: rcu
+  name: rcu
+  namespace: oracle-fusion-domain
+spec:
+  containers:
+  - args:
+    - sleep
+    - infinity
+    image: container-registry.oracle.com/middleware/soasuite:12.2.1.4
+    imagePullPolicy: IfNotPresent
+    name: rcu
+    volumeMounts:
+    - name: rcu-secret-volume
+      mountPath: "/rcu-secret"
+      readOnly: true
+  volumes:
+  - name: rcu-secret-volume
+    secret:
+      secretName: oracle-rcu-secret
+  imagePullSecrets:
+  - name: ora-image-pull

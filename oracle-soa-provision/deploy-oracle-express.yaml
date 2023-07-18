@@ -1,0 +1,98 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: oracle-fusion-db
+spec:
+  finalizers:
+    - kubernetes
+    
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: oracle
+  namespace: oracle-fusion-db
+
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: orcl
+  namespace: oracle-fusion-db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: freenas-nfs-csi
+  volumeMode: Filesystem
+
+---
+
+kind: Pod
+apiVersion: v1
+metadata:
+  name: oraclexpress
+  namespace: oracle-fusion-db
+  labels:
+    app: oraclexpress
+spec:
+  serviceAccountName: oracle
+  nodeName: loki-89zbt-master-0
+  securityContext:
+    seLinuxOptions:
+      level: 's0:c29,c19'
+    fsGroup: 54321
+  containers:
+    - name: oraclexe
+      env:
+        - name: ORACLE_CHARACTERSET
+          value: AL32UTF8
+      securityContext:
+        capabilities:
+          drop:
+            - MKNOD
+      ports:
+        - containerPort: 1521
+          protocol: TCP
+        - containerPort: 5500
+          protocol: TCP
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: orcl
+          mountPath: /opt/oracle/oradata
+      image: 'container-registry.oracle.com/database/express:21.3.0-xe'
+  serviceAccount: oracle
+  volumes:
+    - name: orcl
+      persistentVolumeClaim:
+        claimName: orcl
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: oraclexe
+  namespace: oracle-fusion-db
+  labels:
+    app: oraclexe
+spec:
+  ports:
+    - name: 1521-tcp
+      protocol: TCP
+      port: 1521
+      targetPort: 1521
+      nodePort: 31521
+    - name: 5500-tcp
+      protocol: TCP
+      port: 5500
+      targetPort: 5500
+      nodePort: 30550
+  type: NodePort
+  selector:
+    app: oraclexpress
