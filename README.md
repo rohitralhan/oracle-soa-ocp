@@ -75,14 +75,11 @@ git clone https://github.com/oracle/fmw-kubernetes.git
 ```shell
 export WORKDIR=$HOME/soa_23.2.2/fmw-kubernetes/OracleSOASuite/kubernetes
 ```
-
 4. Next step is to create persistent storage for an Oracle SOA Suite domain. To create the PV and PVC we need to run the scripts from the code directory we cloned in step 3 above. Change directory to
 ```shell
 cd ${WORKDIR}/create-weblogic-domain-pv-pvc`** and run the script >**`./create-pv-pvc.sh -i create-pv-pvc-inputs.yaml -o <<output dir>>
 ```
-
-5. The above script generates 2 yaml file one for the PV and the other for the PVC depending on your environment you may only need to run the PVC yaml file which will auto create the PV on other environments you will need to adjust the PV yaml parameters to create a PV and then execute the PVC yaml. **Check the PV and PVC files to ensure that the storage is set to the correct value if not update it to the appropriate storage class**
-
+5. The above script generates 2 yaml file one for the PV and the other for the PVC depending on your environment you may only need to run the PVC yaml file which will auto create the PV on other environments you will need to adjust the PV yaml parameters to create a PV and then execute the PVC yaml. **Check the PV and PVC files to ensure that the storage class is set to the correct value if not update it to the appropriate storage class**
 6. Depending on your environment run the 
 ```shell
 oc create -f ${WORKDIR}/create-weblogic-domain-pv-pvc/<<output dir>>/<<domainUID-domain-pv.yaml>> -n <<domain project name>>
@@ -91,22 +88,19 @@ followed by
 ```shell
 oc create -f ${WORKDIR}/create-weblogic-domain-pv-pvc/<<output dir>>/<<domainUID-domain-pv.yaml>> -n <<domain project name>>
 ```
-or only run 
+or only run the PVC creation if the PV is auto-provisioned 
 ```shell
 oc create -f ${WORKDIR}/create-weblogic-domain-pv-pvc/<<output dir>>/<<domainUID-domain-pv.yaml>> -n <<domain project name>>
 ```
-
 7. Next create a secret with domain credentials for the administrative account
 ```shell
 ${WORKDIR}/create-weblogic-domain-credentials/create-weblogic-credentials.sh -u weblogic -p Welcome1 -n <<domain project name>> -d <<domainUID>> -s <<secret-name>>
 ```
-
-8. Next step is to create the create a secret with the RCU credentials
+8. Next step is to create create a secret with the RCU credentials
 ```shell
 ${WORKDIR}/create-rcu-credentials/create-rcu-credentials.sh -u <<username>> -p <<password>> -a <<SYSDBA user name>> -q <<SYSDBA user pwd>> -d <<domainUID>> -n <<domain project name>> -s <<secret name>>
 ```
 The script will create and label the secret.
-
 9. Now we need to configure access to the database for this we need to create a secret with SYSDBA user name and password and RCU schema password.
 ```shell
 oc -n oracle-fusion-domain create secret generic oracle-rcu-secret --from-literal='sys_username=<<sys db user>>' --from-literal='sys_password=<<sys db pwd>>' --from-literal='password=<<RCU schema password>>'
@@ -153,19 +147,15 @@ Some of the key values to adjust are as follows:
 ```shell
 ${WORKDIR}/create-soa-domain/domain-home-on-pv/create-domain.sh -i create-domain-inputs.yaml -o ./create-domain-output-script
 ```
-5. Change directory to 
-```shell
-cd ${WORKDIR}/create-soa-domain/domain-home-on-pv/create-domain-output-script/weblogin-domains/soainfra/
-```
-6. A new pod should appear in the namespace to run the domain creation. The pod name should start with the 
+5. A new pod should appear in the namespace to run the domain creation. The pod name should start with the 
 ```shell
 <<domainUID>>-create-soa-infra-domain-job-<<random>>
 ```
-7. Once the script executes successfully the log output of the above pod should look something like the image below
+6. Once the script executes successfully the log output of the above pod should look something like the image below
 
 ![Domain Creation Success Log](images/DomainCreationSuccess.png)
 
-8. The above script will generate files on the output folder specified in step 4 above, navigate to the directory and execute the below command to create the domain 
+8. The above script will generate files on the output folder specified in step 4 above, execute the below command to create the domain 
 ```shell
 oc apply -f ${WORKDIR}/create-soa-domain/domain-home-on-pv/create-domain-output-script/weblogic-domains/soainfra/domain.yaml
 ```
